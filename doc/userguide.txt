@@ -1,0 +1,102 @@
+PSExpect - PowerShell Scripts for Testing
+=========================================
+
+Installation
+------------
+
+The PowerShell Scripts for Testing is a function library that implements xUnit-style assert* statements in PowerShell, Microsoft's .NET-based scripting language and command shell.
+
+To be able to use the function library, you must have the following on your computer:
+* Microsoft .NET Framework 2.0 or greater
+* Microsoft PowerShell 1.0 or greater
+
+To install the function library, follow these steps:
+1 - Obtain the source code from the PowerShell Scripts for Testing site http://psexpect.codeplex.com/
+2 - Unzip the library files into a known location on your hard drive, something like c:\global\psexpect
+3 - Run the provided library test script
+
+set-location c:\global\psexpect
+.\TestAll.ps1
+
+4 - Confirm that the script ran.  There is a mix of passing and failing test conditions.  All of the test cases that have labels ending with "-test" should be marked as having PASSED.  In addition, you should see a file created in the same directory that contains log entries - one per assert statement - that are a record of the test run.
+
+Note: Test conditions that fail are presented in RED in the console and ones that pass are presented in GREEN.  You will also see YELLOW in the console output to represent tests that are designed to fail.  You will see some errors thrown during the tests for AssertThrows that you can safely ignore.  There are instructions further down that will help you interpret all the test results.
+
+5 - Use any of the provided library test scripts TestAssert*.ps1 as an example for getting your own test script started, or see the samples in the samples folder.
+
+6 - Also included in the /doc folder is a syntax highlighting file for EditPadPro (http://www.editpadpro.com/).
+
+TestLib.ps1
+-----------
+
+There some unique features in the PowerShell Scripts for Testing functions that distinguish it from other testing frameworks such as xUnit.  In the following text, 'test condition' refers to any Assert* statement.
+
+First, when the test script runs and evaluates a test condition, there is a log entry created in the file referred to by the variable $LogFileName.  You can modify the default simply by re-assigning the value of this variable at any time in your script.  The log file is intended to provide a digital record of a test run.
+
+Second, every test condition can be supplied with a "label" parameter - this label parameter appears in the log entry every time the test condition is evaluated.  The label is intended to provide a trace back into your test script so that you can quickly identify a failing test condition.
+
+The label for the test condition can also be used to limit the test conditions that run.  The variable $TestConditionFilter is a regular expression that defaults to match every label - you can set it to any valid regular expression.  If the test condition label matches the regular expression in that variable, then it will be evaluated.
+
+Similarly, the variable $RaiseAssertionFilter limits the test condition results that are displayed to the console during a test run.  It defaults so that every test condition result is displayed, but you can change that by setting this variable to any valid regular expression.  
+
+# displays results from only failed test conditions
+$RaiseAssertionFilter = $FailPrefix
+
+# displays results from failed test conditions that have the word 'test' in the label
+$RaiseAssertionFilter = $FailPrefix + "*test"
+
+Third, test conditions that you expect to FAIL can be marked as such so that they are displayed in the console in YELLOW instead of RED.  This is to support test-driven development, where you may want to distinguish failures that you expect from failures that you do not expect.  It is common, for example, to briefly brainstorm a set of tests for a given feature without implementing them.  With PsExpect, you can automate these tests and distinguish them from your other tests that should pass.  The default is that a test condition is expected to pass.
+
+# marks a test condition as 'expected to fail'
+Assert (1 -eq 2) -Label "Some Label" -Intent $Intention.ShouldFail
+
+# marks a test condition as 'expected to pass'
+Assert (1 -eq 2) -Label "Some Label" -Intent
+OR
+Assert (1 -eq 2) -Label "Some Label" -Intent $Intention.ShouldPass
+
+See the TestAssert.ps1 script for the set of test conditions that we have used to test the console output colourization - we are cheating and not automating a test for the colourized output ;-).
+
+Ideally the rest of TestLib.ps1 is straight-forward to use based on your experience with NUnit or other xUnit testing frameworks.
+
+DataLib.ps1
+-----------
+
+In DataLib.ps1, we've created a small number of Excel-related functions that hopefully make it easier to use Excel for storing test data.  What this does for you is increase the "test script to test case" ratio, ideally lowering the cost of testing (as would any other data-driven testing technique).  We chose Excel in part because of its ubiquity but also because any end-users just might be able to help fill it out, especially for functional tests of custom-developed applications.
+
+The goal in providing this library is to write tests that are sheilded from the Excel COM API (object model).  In other words, when Excel 2010 comes out and the COM API is different or there is a better .NET-oriented way of accessing Excel, then we can re-write DataLib.ps1 and all of the test scripts we've built that rely on Excel will still function.  It also minimizes how much of Excel knowledge anyone reading the script needs.
+
+The messy part is in cleaning up the references to the COM Runtime Callable Wrappers (RCW).  All the scripts above contain the code for releasing these objects, and because the Range COM API call returns a System.Object[] of COM objects, we have also provided the function 'release-range' that loops through this array and releases each of the COM objects.
+
+With PSExpect Release 0.3, the work that you have to do to use Excel as the basis for your tests has been reduced significantly, although all of the underlying functions are still available for you to use if you wish.  Here are the steps to follow if you want to use the 'minimalist' approach and have the framework run your tests for you.
+
+1 - Create a table in Excel that contains the test inputs and the expected outputs.  You can format this table however you like, include formulas as much as you want, etc.  The framework will always use the value of the cells when it runs the tests.  You can use any row headings since they are not significant to the running of the test (unlike FIT).
+
+2 - Provide a name for the range using the Excel 'Define Name' command (Insert->Name->Define..).  EXCLUDE any column headings from the named range. See any of the Excel workbooks in \samples for examples of this.
+
+3 - Write a function in PSExpect that uses the test inputs to call the system under test and to compare the actual results to the expected results.  Name this function EXACTLY the same as the name of the range you defined in Step 2 above.  In the same file, call the 'start-test' function with the appropriate parameters to run your tests.  See \samples\Test-Resource.ps1, \samples\Test-GetWeatherPerf.ps1 for examples.
+
+This is the recommended way of working with PoSh, Excel, and your system under test.  The 'start-test' function relies on the other functions that are in the DataLib.ps1 function library, so there are other samples that show how to use them directly if you want more control over Excel and your test.  The samples that use the DataLib.ps1 functions are a follows:
+
+\samples\Test-GetWeather.ps1 - Shows the use of 'open-workbook', 'get-worksheet', 'get-range', 'collect-range' functions
+\samples\Test-GetProcessExcel.ps1 - Shows the use of the 'select-row' function
+\samples\Test-Resource.ps1 - Shows the use of the 'start-test' function
+\samples\Test-GetWeatherPerf.ps1 - Shows the use of the 'start-test' function
+
+FAQ
+---
+1. Why are there so many functions when I can just use Assert-Block for everything?
+This is something that Jeffrey Snover pointed out when I first asked about unit testing in PowerShell (I had originally suggested cmdlets with an 'assert' verb.  He even wrote an AssertBlock function to demonstrate it.  My own answer was that the tester's intentions were clearer if aptly-named functions were used.  I asked around and found another good answer to come from Brian Marick - that the other functions are there so that the error message was more specific if there was a failing assertion.  My advice - make your intentions clear so that other testers don't have to evaluate a script block in their heads.
+
+2. Why not just provide a wrapper around NUnit?
+I almost did this, but opted for a simpler implementation that has no external (at least external to PowerShell) dependencies.  A dependency on NUnit might be a barrier to running smoke tests on production servers.
+
+3. Why the log file?
+As a tester, I need a record of tests that are run - whether they pass or fail - for audit and for other test effectiveness studies.
+
+4. Why the labels?
+At higher test levels, it becomes less and less convenient to maintain a "one test method, one test assertion" philosophy that would enable you to trace exactly to the test condition that failed.  There are almost always multiple test conditions for each user story at the acceptance test level, for example, and this means many test assertions within a single test script.  The label is there to regain the traceability we typically would encode within xUnit as part of automated unit testing.
+
+5. Why is everything global?
+I'm not sure this is the right thing to do, yet. Answering this question is on our to-do list.  We felt it was more important to get something out there and try it than to worry about the scope question.
+
