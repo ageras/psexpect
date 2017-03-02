@@ -1,6 +1,7 @@
 # Copyright 2009 Adam Geras
 # Distributed under the BSD License (See accompanying file license.txt or copy at
 # http://www.opensource.org/licenses/bsd-license.php)
+
 set-psdebug -strict -trace 0
 
 # Demonstrates the Collect function
@@ -55,6 +56,8 @@ function TestGetWeather
             AssertEqual $expected $actual $item.TestCase
     
         }
+		
+		# there is no output unless the assertions are raised
         RaiseAssertions
 
     } else {
