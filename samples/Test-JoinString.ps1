@@ -52,12 +52,12 @@ function Test-Command
 
     # custom and newline separators on the same command - check the exception 
     $separator = "|"
-    $blk = {$joined = join-string -Strings $contents -Separator $separator -NewLine}
+    $blk = {join-string -Strings $contents -Separator $separator -NewLine}
     $blk | AssertThrows -ExceptionExpected "System.Management.Automation.ParameterBindingException" -MessageExpectedRegExpr "Parameter set cannot be resolved" -Label "TC-JS-5"
 
     # null input
     $contents = $null
-    $blk = {$joined = join-string -Strings $contents}
+    $blk = {join-string -Strings $contents}
     $blk | AssertThrows -ExceptionExpected "System.Management.Automation.ValidationMetadataException" -MessageExpectedRegExpr "Cannot validate argument because it is null." -Label "TC-JS-6"
 
     # elements of zero length
@@ -84,6 +84,7 @@ function Test-Command
     $expected = $null
     $joined = $null
     $contents = $null
+
     RaiseAssertions
     
 }

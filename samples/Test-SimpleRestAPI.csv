@@ -1,0 +1,4 @@
+"TestCase","Remark","Method","Command","Parameter","Value","ExpectedResponse"
+"TC-1","Hello Success Without Name","GET","hello","","","Hello, world"
+"TC-2","Hello Success With Blank Name","GET","hello","name","","Hello, world"
+"TC-3","Hello Success With Valid Name","GET","hello","name","Adam","Hello, Adam"
