@@ -74,7 +74,7 @@ function Handle-Request {
 
 try {
     $listener.Start()
-    Write-Host "Listening on $Prefix"
+    Write-Host "Listening on $($Prefix) ... Press Ctrl-C to stop."
     while ($listener.IsListening) {
         # This blocks until a request arrives
         # Handle request on threadpool to allow concurrent processing
